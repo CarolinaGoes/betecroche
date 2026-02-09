@@ -11,8 +11,7 @@ import {
   setDoc,
   deleteDoc as firestoreDeleteDoc
 } from "firebase/firestore";
-import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus, XCircle, Ruler } from "lucide-react";
-
+import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus, Ruler } from "lucide-react";
 export default function Admin() {
   const [items, setItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
