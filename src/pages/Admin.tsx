@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase"; 
-import { 
-  collection, 
-  addDoc, 
-  onSnapshot, 
-  doc, 
-  updateDoc, 
-  query, 
-  orderBy, 
+import { db } from "../firebase";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  doc,
+  updateDoc,
+  query,
+  orderBy,
   setDoc,
   deleteDoc as firestoreDeleteDoc
 } from "firebase/firestore";
-import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus } from "lucide-react";
+import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus, XCircle, Ruler } from "lucide-react";
 
 export default function Admin() {
   const [items, setItems] = useState<any[]>([]);
@@ -22,10 +22,11 @@ export default function Admin() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [dimensions, setDimensions] = useState(""); // Novo campo de medidas
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [imageEncoded, setImageEncoded] = useState<string | null>(null);
-  const [fileName, setFileName] = useState(""); 
+  const [fileName, setFileName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
 
   useEffect(() => {
@@ -36,19 +37,79 @@ export default function Admin() {
 
     const unsubCats = onSnapshot(doc(db, "settings", "categories"), (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.data();
-        setCategories(data.list || []);
-      } else {
-        setCategories([]);
+        setCategories(snapshot.data().list || []);
       }
     });
 
-    return () => {
-      unsubItems();
-      unsubCats();
-    };
+    return () => { unsubItems(); unsubCats(); };
   }, []);
 
+  const handleEditClick = (item: any) => {
+    setIsEditing(item.id);
+    setTitle(item.title);
+    setDescription(item.description || "");
+    setDimensions(item.dimensions || ""); // Carrega as medidas
+    setPrice(item.price.toString());
+    setCategory(item.category);
+    setFileName("Imagem atual preservada");
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setMessage("✏️ Editando peça...");
+    setTimeout(() => setMessage(""), 3000);
+  };
+
+  const clearForm = () => {
+    setTitle("");
+    setDescription("");
+    setDimensions("");
+    setPrice("");
+    setCategory("");
+    setImageEncoded(null);
+    setFileName("");
+    setIsEditing(null);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const data: any = {
+        title,
+        description,
+        dimensions, // Salva as medidas no Firebase
+        price: parseFloat(price.replace(",", ".")),
+        category,
+        date: new Date().toISOString(),
+      };
+      if (imageEncoded) data.image = imageEncoded;
+
+      if (isEditing) {
+        await updateDoc(doc(db, "artworks", isEditing), data);
+        setMessage("✅ Peça atualizada!");
+      } else {
+        if (!imageEncoded) throw new Error("Foto obrigatória");
+        data.status = "disponivel";
+        await addDoc(collection(db, "artworks"), data);
+        setMessage("✅ Publicado!");
+      }
+      clearForm();
+    } catch (error) {
+      setMessage("❌ Erro ao salvar.");
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(""), 4000);
+    }
+  };
+
+  const updateStatus = async (id: string, newStatus: string) => {
+    try {
+      await updateDoc(doc(db, "artworks", id), { status: newStatus });
+      setMessage("✅ Status atualizado!");
+    } catch (error) { setMessage("❌ Erro no status."); }
+    setTimeout(() => setMessage(""), 2000);
+  };
+
+  // ... (handleFileChange, handleDeleteItem, handleAddCategory, handleRemoveCategory permanecem iguais)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -60,7 +121,7 @@ export default function Admin() {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const maxWidth = 800; 
+          const maxWidth = 800;
           let width = img.width;
           let height = img.height;
           if (width > maxWidth) {
@@ -77,86 +138,37 @@ export default function Admin() {
     }
   };
 
+  const handleDeleteItem = async (id: string) => {
+    if (window.confirm("Apagar peça permanentemente?")) {
+      try {
+        await firestoreDeleteDoc(doc(db, "artworks", id));
+        setMessage("🗑️ Peça removida!");
+      } catch (error) { setMessage("❌ Erro ao apagar."); }
+      setTimeout(() => setMessage(""), 2000);
+    }
+  };
+
   const handleAddCategory = async (e: React.MouseEvent) => {
     e.preventDefault();
     const cleanName = newCategoryName.trim();
-    if (cleanName === "" || categories.includes(cleanName)) return;
-
+    if (!cleanName || categories.includes(cleanName)) return;
     try {
-      const newCategories = [...categories, cleanName];
-      await setDoc(doc(db, "settings", "categories"), { list: newCategories });
+      const newCats = [...categories, cleanName];
+      await setDoc(doc(db, "settings", "categories"), { list: newCats });
       setNewCategoryName("");
-      setMessage("✅ Categoria salva!");
-    } catch (error) {
-      setMessage("❌ Erro ao salvar categoria.");
-    }
+      setMessage("✅ Categoria adicionada!");
+    } catch (error) { setMessage("❌ Erro na categoria."); }
     setTimeout(() => setMessage(""), 2000);
   };
 
   const handleRemoveCategory = async (catToRemove: string) => {
     if (window.confirm(`Remover "${catToRemove}"?`)) {
       try {
-        const newCategories = categories.filter(c => c !== catToRemove);
-        await setDoc(doc(db, "settings", "categories"), { list: newCategories });
-        if (category === catToRemove) setCategory("");
-        setMessage("🗑️ Removida!");
-      } catch (error) {
-        setMessage("❌ Erro ao remover.");
-      }
+        const newCats = categories.filter(c => c !== catToRemove);
+        await setDoc(doc(db, "settings", "categories"), { list: newCats });
+        setMessage("🗑️ Categoria removida!");
+      } catch (error) { setMessage("❌ Erro ao remover."); }
       setTimeout(() => setMessage(""), 2000);
-    }
-  };
-
-  const updateStatus = async (id: string, newStatus: string) => {
-    try {
-      await updateDoc(doc(db, "artworks", id), { status: newStatus });
-      setMessage("✅ Status atualizado!");
-    } catch (error) {
-      setMessage("❌ Erro no status.");
-    }
-    setTimeout(() => setMessage(""), 2000);
-  };
-
-  const handleDeleteItem = async (id: string) => {
-    if (window.confirm("Apagar peça permanentemente?")) {
-      try {
-        await firestoreDeleteDoc(doc(db, "artworks", id));
-        setMessage("🗑️ Peça removida!");
-      } catch (error) {
-        setMessage("❌ Erro ao apagar.");
-      }
-      setTimeout(() => setMessage(""), 2000);
-    }
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const data: any = {
-        title,
-        description,
-        price: parseFloat(price.replace(",", ".")),
-        category,
-        date: new Date().toISOString(),
-      };
-      if (imageEncoded) data.image = imageEncoded;
-
-      if (isEditing) {
-        await updateDoc(doc(db, "artworks", isEditing), data);
-        setMessage("✅ Peça atualizada!");
-      } else {
-        if (!imageEncoded) throw new Error("Foto obrigatória");
-        data.status = "disponivel";
-        await addDoc(collection(db, "artworks"), data);
-        setMessage("✅ Publicado!");
-      }
-      setTitle(""); setDescription(""); setPrice(""); setCategory(""); setImageEncoded(null); setFileName(""); setIsEditing(null);
-    } catch (error) {
-      setMessage("❌ Erro ao salvar.");
-    } finally {
-      setLoading(false);
-      setTimeout(() => setMessage(""), 4000);
     }
   };
 
@@ -175,12 +187,21 @@ export default function Admin() {
 
         <section className="bg-white rounded-3xl shadow-lg p-6 mb-8 border border-purple-100">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-purple-900 font-serif">
-            {isEditing ? <Edit2 size={24} /> : <Plus size={24} />} 
+            {isEditing ? <Edit2 size={24} className="text-orange-500" /> : <Plus size={24} />}
             {isEditing ? "Editar Peça" : "Nova Peça"}
           </h2>
+          
           <form onSubmit={handleSave} className="space-y-4">
             <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" className="w-full p-3 rounded-xl border bg-purple-50/30 outline-none" />
+            
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição" rows={2} className="w-full p-3 rounded-xl border bg-purple-50/30 outline-none" />
+            
+            {/* Campo de Medidas */}
+            <div className="relative">
+              <Ruler size={18} className="absolute left-3 top-3.5 text-purple-300" />
+              <input type="text" value={dimensions} onChange={(e) => setDimensions(e.target.value)} placeholder="Medidas (ex: 30x40cm)" className="w-full p-3 pl-10 rounded-xl border bg-purple-50/30 outline-none" />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <input type="text" required value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Preço (R$)" className="p-3 rounded-xl border bg-purple-50/30" />
               <select required value={category} onChange={(e) => setCategory(e.target.value)} className="p-3 rounded-xl border bg-purple-50/30">
@@ -188,6 +209,7 @@ export default function Admin() {
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+
             <div className="bg-purple-50 p-4 rounded-xl border-2 border-dashed border-purple-200 text-center">
               <label className="cursor-pointer">
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
@@ -195,12 +217,17 @@ export default function Admin() {
                 <span className="text-sm font-bold text-purple-600 block">{fileName || "Escolher Foto"}</span>
               </label>
             </div>
-            <button type="submit" disabled={loading} className="w-full bg-purple-600 text-white p-4 rounded-xl font-bold hover:bg-purple-700 shadow-md">
+
+            <button type="submit" disabled={loading} className={`w-full ${isEditing ? 'bg-orange-500' : 'bg-purple-600'} text-white p-4 rounded-xl font-bold shadow-md`}>
               <Save size={20} className="inline mr-2"/> {isEditing ? "Salvar Alteração" : "Publicar"}
             </button>
+            {isEditing && (
+              <button type="button" onClick={clearForm} className="w-full text-gray-400 text-sm py-2">Cancelar Edição</button>
+            )}
           </form>
         </section>
 
+        {/* ... (Seção de Categorias mantida igual) */}
         <section className="bg-white rounded-3xl shadow-md p-6 mb-10 border border-purple-100">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-purple-800 font-serif">
             <FolderPlus size={22} /> Categorias
@@ -226,12 +253,18 @@ export default function Admin() {
               <img src={item.image} className="w-20 h-20 object-cover rounded-xl" alt="" />
               <div className="flex-1">
                 <h3 className="font-bold text-gray-800">{item.title}</h3>
-                <p className="text-purple-600 font-bold">R$ {Number(item.price).toFixed(2)}</p>
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => updateStatus(item.id, "disponivel")} className={`text-[10px] px-2 py-1 rounded font-bold border ${item.status === 'disponivel' ? 'bg-green-500 text-white' : 'text-green-500 border-green-100'}`}>Disponível</button>
-                  <button onClick={() => updateStatus(item.id, "vendido")} className={`text-[10px] px-2 py-1 rounded font-bold border ${item.status === 'vendido' ? 'bg-red-500 text-white' : 'text-red-500 border-red-100'}`}>Vendido</button>
-                  <button onClick={() => { setIsEditing(item.id); setTitle(item.title); setDescription(item.description || ""); setPrice(item.price.toString()); setCategory(item.category); window.scrollTo(0,0); }} className="text-[10px] px-2 py-1 rounded font-bold border bg-gray-50 text-gray-500">Editar</button>
-                  <button onClick={() => handleDeleteItem(item.id)} className="text-[10px] px-2 py-1 rounded font-bold border bg-gray-50 text-red-400">Apagar</button>
+                {item.dimensions && <p className="text-[10px] text-gray-400 italic">📏 {item.dimensions}</p>}
+                <p className="text-purple-600 font-bold text-sm">R$ {Number(item.price).toFixed(2)}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <button onClick={() => updateStatus(item.id, "disponivel")} className={`text-[9px] px-2 py-1 rounded font-bold border ${item.status === 'disponivel' ? 'bg-green-500 text-white' : 'text-green-500 border-green-100'}`}>Disponível</button>
+                  
+                  {/* Botão Por Encomenda em Azul */}
+                  <button onClick={() => updateStatus(item.id, "encomenda")} className={`text-[9px] px-2 py-1 rounded font-bold border ${item.status === 'encomenda' ? 'bg-blue-500 text-white' : 'text-blue-500 border-blue-100'}`}>Por Encomenda</button>
+                  
+                  <button onClick={() => updateStatus(item.id, "vendido")} className={`text-[9px] px-2 py-1 rounded font-bold border ${item.status === 'vendido' ? 'bg-red-500 text-white' : 'text-red-500 border-red-100'}`}>Vendido</button>
+                  
+                  <button onClick={() => handleEditClick(item)} className="text-[9px] px-2 py-1 rounded font-bold border bg-gray-50 text-gray-500">Editar</button>
+                  <button onClick={() => handleDeleteItem(item.id)} className="text-[9px] px-2 py-1 rounded font-bold border bg-gray-50 text-red-400">Apagar</button>
                 </div>
               </div>
             </div>
