@@ -7,4 +7,5 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  base: '/', // A propriedade base deve ficar aqui, fora dos plugins
 })
