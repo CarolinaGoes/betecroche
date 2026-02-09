@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { db } from "../firebase";
 import {
   collection,
@@ -11,9 +11,11 @@ import {
   setDoc,
   deleteDoc as firestoreDeleteDoc
 } from "firebase/firestore";
-import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus, Ruler } from "lucide-react";
+import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus, Ruler, ExternalLink, Eye } from "lucide-react";
 
 export default function Admin() {
+  const formRef = useRef<HTMLDivElement>(null);
+
   const [items, setItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -53,12 +55,11 @@ export default function Admin() {
     setCategory(item.category);
     setFileName("Imagem atual preservada");
 
-    // Scroll para o topo garantido
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 100);
+    if (formRef.current) {
+      formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 
-    setMessage("✏️ Modo de edição ativado");
+    setMessage("✏️ Editando: " + item.title);
     setTimeout(() => setMessage(""), 3000);
   };
 
@@ -184,94 +185,146 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDF7FF] p-4 md:p-8 font-sans text-gray-800">
+    <div className="min-h-screen bg-[#FDF7FF] p-4 md:p-8 font-sans text-gray-900">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-8 text-center text-purple-600">
-          <h1 className="text-4xl font-serif font-bold italic">Painel da Bete 💜</h1>
+        
+        {/* BOTÃO PARA O SITE NO TOPO */}
+        <div className="flex justify-center mb-6">
+          <a 
+            href="https://betemartins.vercel.app" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-purple-100 text-purple-700 px-8 py-4 rounded-full text-xl font-black border-2 border-purple-300 hover:bg-purple-200 transition-all shadow-sm"
+          >
+            <Eye size={28} />
+            VER MEU SITE
+            <ExternalLink size={20} />
+          </a>
+        </div>
+
+        <header ref={formRef} className="mb-10 text-center text-purple-700">
+          <h1 className="text-5xl md:text-6xl font-serif font-bold italic">Painel da Bete 💜</h1>
+          <p className="text-2xl mt-2 font-medium text-purple-500/80">Administração de Peças</p>
         </header>
 
         {message && (
-          <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-white border-2 border-purple-600 text-purple-600 px-6 py-3 rounded-2xl shadow-2xl z-50 font-bold">
-            <CheckCircle size={20} className="inline mr-2" /> {message}
+          <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-white border-4 border-purple-600 text-purple-700 px-8 py-4 rounded-3xl shadow-2xl z-50 text-2xl font-bold animate-pulse">
+            {message}
           </div>
         )}
 
-        <section className={`bg-white rounded-3xl shadow-lg p-6 mb-8 border transition-all duration-300 ${isEditing ? 'border-orange-400 ring-2 ring-orange-50' : 'border-purple-100'}`}>
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-purple-900 font-serif">
-            {isEditing ? <Edit2 size={24} className="text-orange-500" /> : <Plus size={24} />}
-            {isEditing ? "Editar Detalhes da Peça" : "Nova Peça"}
+        {/* FORMULÁRIO PRINCIPAL */}
+        <section className={`bg-white rounded-[40px] shadow-2xl p-8 mb-12 border-4 transition-all duration-300 ${isEditing ? 'border-orange-400 ring-8 ring-orange-50' : 'border-purple-100'}`}>
+          <h2 className="text-3xl md:text-4xl font-bold mb-8 flex items-center gap-3 text-purple-900 font-serif">
+            {isEditing ? <Edit2 size={36} className="text-orange-500" /> : <Plus size={36} />}
+            {isEditing ? "Editar Peça" : "Nova Peça"}
           </h2>
           
-          <form onSubmit={handleSave} className="space-y-4">
-            <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" className="w-full p-3 rounded-xl border bg-purple-50/30 outline-none focus:border-purple-400" />
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição" rows={2} className="w-full p-3 rounded-xl border bg-purple-50/30 outline-none focus:border-purple-400" />
+          <form onSubmit={handleSave} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-2xl font-bold text-gray-700 ml-2">Nome da Peça</label>
+              <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Tapete de Sala" className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500" />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-2xl font-bold text-gray-700 ml-2">Descrição</label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Detalhes (cor, linha, etc)..." rows={3} className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500" />
+            </div>
             
-            <div className="relative">
-              <Ruler size={18} className="absolute left-3 top-3.5 text-purple-300" />
-              <input type="text" value={dimensions} onChange={(e) => setDimensions(e.target.value)} placeholder="Medidas (ex: 30x40cm)" className="w-full p-3 pl-10 rounded-xl border bg-purple-50/30 outline-none focus:border-purple-400" />
+            <div className="space-y-2">
+              <label className="text-2xl font-bold text-gray-700 ml-2">Tamanho / Medidas</label>
+              <div className="relative">
+                <Ruler size={28} className="absolute left-4 top-6 text-purple-400" />
+                <input type="text" value={dimensions} onChange={(e) => setDimensions(e.target.value)} placeholder="Ex: 60cm de largura" className="w-full p-6 pl-16 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500" />
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <input type="text" required value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Preço (R$)" className="p-3 rounded-xl border bg-purple-50/30 outline-none focus:border-purple-400" />
-              <select required value={category} onChange={(e) => setCategory(e.target.value)} className="p-3 rounded-xl border bg-purple-50/30 outline-none focus:border-purple-400">
-                <option value="">Categoria...</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-2xl font-bold text-gray-700 ml-2">Preço (R$)</label>
+                <input type="text" required value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-2xl font-bold text-gray-700 ml-2">Categoria</label>
+                <select required value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500 appearance-none">
+                  <option value="">Escolha uma...</option>
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
             </div>
 
-            <div className="bg-purple-50 p-4 rounded-xl border-2 border-dashed border-purple-200 text-center">
+            <div className="bg-purple-100/50 p-10 rounded-2xl border-4 border-dashed border-purple-300 text-center">
               <label className="cursor-pointer">
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                <ImageIcon size={24} className="mx-auto mb-1 text-purple-400" />
-                <span className="text-sm font-bold text-purple-600 block">{fileName || "Escolher Foto"}</span>
+                <ImageIcon size={50} className="mx-auto mb-3 text-purple-500" />
+                <span className="text-2xl font-black text-purple-700 block leading-tight">{fileName || "Clique aqui para escolher a foto"}</span>
               </label>
             </div>
 
-            <button type="submit" disabled={loading} className={`w-full ${isEditing ? 'bg-orange-500 hover:bg-orange-600' : 'bg-purple-600 hover:bg-purple-700'} text-white p-4 rounded-xl font-bold shadow-md transition-colors`}>
-              <Save size={20} className="inline mr-2"/> {loading ? "Salvando..." : isEditing ? "Salvar Alteração" : "Publicar Peça"}
+            <button type="submit" disabled={loading} className={`w-full ${isEditing ? 'bg-orange-500' : 'bg-purple-600'} text-white p-7 rounded-3xl text-3xl font-black shadow-xl hover:brightness-110 active:scale-95 transition-all`}>
+              <Save size={32} className="inline mr-3"/> {loading ? "Salvando..." : isEditing ? "Salvar Alteração" : "Publicar no Site"}
             </button>
+            
             {isEditing && (
-              <button type="button" onClick={clearForm} className="w-full text-gray-400 text-sm py-2 hover:text-red-400 transition-colors">Cancelar Edição</button>
+              <button type="button" onClick={clearForm} className="w-full text-gray-500 text-2xl font-bold py-2 underline">Cancelar Edição</button>
             )}
           </form>
         </section>
 
-        <section className="bg-white rounded-3xl shadow-md p-6 mb-10 border border-purple-100">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-purple-800 font-serif">
-            <FolderPlus size={22} /> Categorias
+        {/* SEÇÃO DE CATEGORIAS */}
+        <section className="bg-white rounded-[40px] shadow-lg p-8 mb-12 border-4 border-purple-100">
+          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3 text-purple-800 font-serif">
+            <FolderPlus size={32} /> Criar Categorias
           </h2>
-          <div className="flex gap-2 mb-6">
-            <input type="text" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Nova categoria..." className="flex-1 p-3 rounded-xl border bg-purple-50/30 outline-none" />
-            <button onClick={handleAddCategory} className="bg-purple-600 text-white px-6 rounded-xl font-bold hover:bg-purple-700">Add</button>
+          <div className="flex flex-col gap-4 mb-8">
+            <input 
+              type="text" 
+              value={newCategoryName} 
+              onChange={(e) => setNewCategoryName(e.target.value)} 
+              placeholder="Ex: Banheiro, Cozinha..." 
+              className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 outline-none focus:border-purple-400" 
+            />
+            <button 
+              onClick={handleAddCategory} 
+              className="w-full bg-purple-700 text-white p-6 rounded-2xl text-2xl font-black hover:bg-purple-800 transition-colors shadow-lg"
+            >
+              ADICIONAR CATEGORIA
+            </button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-4">
             {categories.map(cat => (
-              <div key={cat} className="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-lg border border-purple-100 text-purple-700">
+              <div key={cat} className="flex items-center gap-4 bg-purple-50 px-6 py-4 rounded-2xl border-2 border-purple-100 text-purple-700 text-2xl font-bold">
                 {cat}
-                <button onClick={() => handleRemoveCategory(cat)} className="text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
+                <button onClick={() => handleRemoveCategory(cat)} className="text-red-400 hover:text-red-600"><Trash2 size={30} /></button>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-xl font-bold text-purple-900 font-serif">Peças no Site</h2>
+        {/* LISTA DE PEÇAS */}
+        <section className="space-y-8 pb-32">
+          <h2 className="text-4xl font-black text-purple-900 font-serif mb-8 text-center md:text-left">Lista de Peças Cadastradas</h2>
           {items.map(item => (
-            <div key={item.id} className={`bg-white p-4 rounded-2xl shadow-sm border flex gap-4 items-center transition-all ${isEditing === item.id ? 'border-orange-300 ring-2 ring-orange-50' : 'border-purple-50'}`}>
-              <img src={item.image} className="w-20 h-20 object-cover rounded-xl" alt="" />
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-800">{item.title}</h3>
-                {item.dimensions && <p className="text-[10px] text-gray-400 italic font-medium">📏 {item.dimensions}</p>}
-                <p className="text-purple-600 font-bold text-sm">R$ {Number(item.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <button onClick={() => updateStatus(item.id, "disponivel")} className={`text-[9px] px-2 py-1 rounded font-bold border transition-colors ${item.status === 'disponivel' ? 'bg-green-500 text-white border-green-500' : 'text-green-500 border-green-100 hover:bg-green-50'}`}>Disponível</button>
-                  
-                  <button onClick={() => updateStatus(item.id, "encomenda")} className={`text-[9px] px-2 py-1 rounded font-bold border transition-colors ${item.status === 'encomenda' ? 'bg-blue-500 text-white border-blue-500' : 'text-blue-500 border-blue-100 hover:bg-blue-50'}`}>Por Encomenda</button>
-                  
-                  <button onClick={() => updateStatus(item.id, "vendido")} className={`text-[9px] px-2 py-1 rounded font-bold border transition-colors ${item.status === 'vendido' ? 'bg-red-500 text-white border-red-500' : 'text-red-500 border-red-100 hover:bg-red-50'}`}>Vendido</button>
-                  
-                  <button onClick={() => handleEditClick(item)} className="text-[9px] px-2 py-1 rounded font-bold border bg-gray-50 text-gray-500 hover:bg-orange-50 hover:text-orange-600">Editar</button>
-                  <button onClick={() => handleDeleteItem(item.id)} className="text-[9px] px-2 py-1 rounded font-bold border bg-gray-50 text-red-400 hover:bg-red-50">Apagar</button>
+            <div key={item.id} className={`bg-white p-6 rounded-[40px] shadow-md border-4 flex flex-col gap-6 items-center transition-all ${isEditing === item.id ? 'border-orange-400 bg-orange-50/30' : 'border-purple-50'}`}>
+              <img src={item.image} className="w-full md:w-60 h-60 object-cover rounded-[30px] shadow-inner" alt="" />
+              <div className="flex-1 w-full text-center md:text-left">
+                <h3 className="text-3xl font-black text-gray-800 mb-2">{item.title}</h3>
+                {item.dimensions && <p className="text-2xl text-gray-500 mb-2 font-bold">📏 {item.dimensions}</p>}
+                <p className="text-purple-700 font-black text-4xl mb-6">R$ {Number(item.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                
+                <div className="grid grid-cols-1 gap-3 mb-8">
+                  <button onClick={() => updateStatus(item.id, "disponivel")} className={`p-5 rounded-2xl text-xl font-black border-4 ${item.status === 'disponivel' ? 'bg-green-600 text-white border-green-600 shadow-md' : 'text-green-600 border-green-200 bg-green-50'}`}>DISPONÍVEL AGORA</button>
+                  <button onClick={() => updateStatus(item.id, "encomenda")} className={`p-5 rounded-2xl text-xl font-black border-4 ${item.status === 'encomenda' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'text-blue-600 border-blue-200 bg-blue-50'}`}>POR ENCOMENDA</button>
+                  <button onClick={() => updateStatus(item.id, "vendido")} className={`p-5 rounded-2xl text-xl font-black border-4 ${item.status === 'vendido' ? 'bg-red-600 text-white border-red-600 shadow-md' : 'text-red-600 border-red-200 bg-red-50'}`}>JÁ FOI VENDIDO</button>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-4 pt-6 border-t-4 border-gray-100">
+                  <button onClick={() => handleEditClick(item)} className="flex-1 flex items-center justify-center gap-3 bg-gray-200 text-gray-800 p-6 rounded-2xl text-2xl font-black hover:bg-orange-400 hover:text-white transition-all">
+                    <Edit2 size={28} /> ALTERAR PEÇA
+                  </button>
+                  <button onClick={() => handleDeleteItem(item.id)} className="flex items-center justify-center gap-3 bg-red-100 text-red-600 p-6 rounded-2xl text-2xl font-black hover:bg-red-600 hover:text-white transition-all">
+                    <Trash2 size={28} /> APAGAR
+                  </button>
                 </div>
               </div>
             </div>
