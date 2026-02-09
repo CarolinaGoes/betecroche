@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom"; // Adicionado useLocation
 import Navbar from "./components/Navbar"; 
 import Footer from "./components/Footer";
 import BackToTop from "./components/BackToTop";
+import Whatsapp from "./components/Whatsapp"
 
 import Hero from "./pages/Hero"; 
 import Sobre from "./pages/Sobre";
@@ -55,6 +56,7 @@ export default function Home() {
       </main>
       <Footer />
       <BackToTop />
+      <Whatsapp />
     </Fragment>
   );
 }

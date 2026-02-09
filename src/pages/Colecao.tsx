@@ -24,18 +24,16 @@ export default function Colecao() {
   const [category, setCategory] = useState("Todos");
   const [sortBy, setSortBy] = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 9;
+  const itemsPerPage = 12; // Aumentei para 12 para fechar linhas de 4 no desktop
 
   // Busca de dados no Firebase
   useEffect(() => {
-    // 1. Busca as Peças (Artworks)
     const qWorks = query(collection(db, "artworks"), orderBy("date", "desc"), limit(100));
     const unsubWorks = onSnapshot(qWorks, (snapshot) => {
       setWorksData(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     });
 
-    // 2. CORREÇÃO: Busca as categorias dentro de settings/categories campo "list"
     const unsubCats = onSnapshot(doc(db, "settings", "categories"), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
@@ -65,7 +63,7 @@ export default function Colecao() {
   }, [worksData, searchTerm, category, sortBy]);
 
   const currentItems = filteredWorks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const totalPages = Math.ceil(filteredWorks.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredWorks.length * 1 / itemsPerPage);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -129,29 +127,30 @@ export default function Colecao() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+            {/* GRID CORRIGIDO: 2 colunas no celular, 3 no tablet, 4 no desktop */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
               {currentItems.map((work) => (
                 <div key={work.id} className="group flex flex-col">
                   <div 
-                    className="relative aspect-[3/4] overflow-hidden rounded-sm bg-white shadow-sm mb-4 cursor-pointer"
+                    className="relative aspect-[3/4] overflow-hidden rounded-sm bg-white shadow-sm mb-3 cursor-pointer"
                     onClick={() => navigate(`/item/${work.id}`, { state: { work } })}
                   >
                     <img src={work.image} alt={work.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-white/90 backdrop-blur-sm px-3 py-1 text-[10px] uppercase tracking-widest font-bold text-brand-lavender-dark">
+                    <div className="absolute top-3 left-3">
+                      <span className="bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] uppercase tracking-widest font-bold text-brand-lavender-dark">
                         {work.category}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-serif text-brand-brown group-hover:text-brand-lavender-dark transition-colors">
+                  <div className="flex justify-between items-start mb-3 min-h-[50px]">
+                    <h3 className="text-lg font-serif text-brand-brown group-hover:text-brand-lavender-dark transition-colors leading-tight">
                       {work.title}
                     </h3>
-                    <div className="text-right">
-                      <p className="text-brand-lavender-dark font-semibold">
+                    <div className="text-right ml-2">
+                      <p className="text-brand-lavender-dark font-semibold text-sm">
                          {work.status === 'vendido' ? (
-                           <span className="text-red-500 text-[10px] uppercase font-bold tracking-widest">Vendido</span>
+                           <span className="text-red-500 text-[9px] uppercase font-bold tracking-widest">Vendido</span>
                          ) : (
                            `R$ ${work.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                          )}
@@ -161,7 +160,7 @@ export default function Colecao() {
 
                   <button 
                     onClick={() => navigate(`/item/${work.id}`, { state: { work } })}
-                    className="w-full py-3 rounded-full border border-brand-lavender-dark text-brand-lavender-dark text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-brand-lavender-dark hover:text-white transition-all duration-300"
+                    className="w-full py-2.5 rounded-full border border-brand-lavender-dark text-brand-lavender-dark text-[9px] uppercase tracking-[0.2em] font-bold hover:bg-brand-lavender-dark hover:text-white transition-all duration-300"
                   >
                     Ver Detalhes
                   </button>

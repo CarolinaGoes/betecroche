@@ -61,7 +61,7 @@ export default function Item() {
         );
     }
 
-    const WHATSAPP_NUMBER = "5511972230817";
+    const WHATSAPP_NUMBER = "5513991912020";
     const currentUrl = window.location.href;
 
     // Lógica de cores para o status
