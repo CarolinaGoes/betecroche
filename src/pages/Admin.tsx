@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase"; 
-import { collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, orderBy, getDocs, where } from "firebase/firestore";
+import { 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  deleteDoc, 
+  doc, 
+  updateDoc, 
+  query, 
+  orderBy, 
+  limit,
+  setDoc,
+  getDoc
+} from "firebase/firestore";
 import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Admin() {
   const navigate = useNavigate();
   const [items, setItems] = useState<any[]>([]);
-  const [categories, setCategories] = useState<string[]>([]); // Agora inicia vazio e vem do banco
+  const [categories, setCategories] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -20,19 +32,19 @@ export default function Admin() {
   const [fileName, setFileName] = useState(""); 
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  // 1. Monitorar ITENS e CATEGORIAS do Firebase em tempo real
+  // 1. Monitorar ITENS (Coleção) e CATEGORIAS (Documento único)
   useEffect(() => {
-    // Escuta Itens
+    // Escuta Peças
     const qItems = query(collection(db, "artworks"), orderBy("date", "desc"));
     const unsubItems = onSnapshot(qItems, (snapshot) => {
       setItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // Escuta Categorias
-    const qCats = query(collection(db, "categories"), orderBy("name", "asc"));
-    const unsubCats = onSnapshot(qCats, (snapshot) => {
-      const catsFromDb = snapshot.docs.map(doc => doc.data().name);
-      setCategories(catsFromDb);
+    // CORREÇÃO: Escuta o documento único de categorias (igual à sua imagem)
+    const unsubCats = onSnapshot(doc(db, "settings", "categories"), (snapshot) => {
+      if (snapshot.exists()) {
+        setCategories(snapshot.data().list || []);
+      }
     });
 
     return () => {
@@ -69,36 +81,29 @@ export default function Admin() {
     }
   };
 
-  // 2. Adicionar categoria ao FIREBASE
+  // 2. CORREÇÃO: Adicionar categoria na ARRAY 'list' do Firebase
   const handleAddCategory = async (e: React.MouseEvent) => {
     e.preventDefault();
     const cleanName = newCategoryName.trim();
-    if (cleanName === "") return;
-    if (categories.includes(cleanName)) {
-      setMessage("⚠️ Essa categoria já existe!");
-      setTimeout(() => setMessage(""), 2000);
-      return;
-    }
+    if (cleanName === "" || categories.includes(cleanName)) return;
 
     try {
-      await addDoc(collection(db, "categories"), { name: cleanName });
+      const newCategories = [...categories, cleanName];
+      await setDoc(doc(db, "settings", "categories"), { list: newCategories }, { merge: true });
       setNewCategoryName("");
-      setMessage("✅ Categoria salva no banco!");
+      setMessage("✅ Categoria adicionada!");
     } catch (error) {
       setMessage("❌ Erro ao salvar categoria.");
     }
     setTimeout(() => setMessage(""), 2000);
   };
 
-  // 3. Remover categoria do FIREBASE
+  // 3. CORREÇÃO: Remover categoria da ARRAY 'list' do Firebase
   const handleRemoveCategory = async (catToRemove: string) => {
-    if (window.confirm(`Deseja mesmo remover a categoria "${catToRemove}"?`)) {
+    if (window.confirm(`Remover a categoria "${catToRemove}"?`)) {
       try {
-        const q = query(collection(db, "categories"), where("name", "==", catToRemove));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach(async (documento) => {
-          await deleteDoc(doc(db, "categories", documento.id));
-        });
+        const newCategories = categories.filter(c => c !== catToRemove);
+        await setDoc(doc(db, "settings", "categories"), { list: newCategories });
         if (category === catToRemove) setCategory("");
         setMessage("🗑️ Categoria removida!");
       } catch (error) {

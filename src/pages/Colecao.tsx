@@ -6,6 +6,7 @@ import {
   onSnapshot, 
   query, 
   orderBy, 
+  doc, 
   limit 
 } from "firebase/firestore";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
@@ -34,11 +35,12 @@ export default function Colecao() {
       setLoading(false);
     });
 
-    // 2. Busca as Categorias (Sincronizado com o Admin)
-    const qCats = query(collection(db, "categories"), orderBy("name", "asc"));
-    const unsubCats = onSnapshot(qCats, (snapshot) => {
-      const catsFromDb = snapshot.docs.map(doc => doc.data().name);
-      setCategories(catsFromDb);
+    // 2. CORREÇÃO: Busca as categorias dentro de settings/categories campo "list"
+    const unsubCats = onSnapshot(doc(db, "settings", "categories"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setCategories(data.list || []);
+      }
     });
 
     return () => { 
