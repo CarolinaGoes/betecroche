@@ -6,7 +6,6 @@ import {
   onSnapshot, 
   query, 
   orderBy, 
-  doc, 
   limit 
 } from "firebase/firestore";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
@@ -28,17 +27,24 @@ export default function Colecao() {
 
   // Busca de dados no Firebase
   useEffect(() => {
+    // 1. Busca as Peças (Artworks)
     const qWorks = query(collection(db, "artworks"), orderBy("date", "desc"), limit(100));
     const unsubWorks = onSnapshot(qWorks, (snapshot) => {
       setWorksData(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     });
 
-    const unsubCats = onSnapshot(doc(db, "settings", "categories"), (snapshot) => {
-      if (snapshot.exists()) setCategories(snapshot.data().list || []);
+    // 2. Busca as Categorias (Sincronizado com o Admin)
+    const qCats = query(collection(db, "categories"), orderBy("name", "asc"));
+    const unsubCats = onSnapshot(qCats, (snapshot) => {
+      const catsFromDb = snapshot.docs.map(doc => doc.data().name);
+      setCategories(catsFromDb);
     });
 
-    return () => { unsubWorks(); unsubCats(); };
+    return () => { 
+      unsubWorks(); 
+      unsubCats(); 
+    };
   }, []);
 
   // Lógica de Filtro e Ordenação
@@ -67,7 +73,6 @@ export default function Colecao() {
     <div className="min-h-screen bg-brander-lavander relative">
       <Navbar />
 
-      {/* Removido o z-10 para não sobrepor o menu da Navbar */}
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative"> 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="flex flex-col"> 
@@ -141,13 +146,15 @@ export default function Colecao() {
                     <h3 className="text-xl font-serif text-brand-brown group-hover:text-brand-lavender-dark transition-colors">
                       {work.title}
                     </h3>
-                    <p className="text-brand-lavender-dark font-semibold">
-                       {work.status === 'vendido' ? (
-                         <span className="text-red-500 text-[10px] uppercase">Vendido</span>
-                       ) : (
-                         `R$ ${work.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                       )}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-brand-lavender-dark font-semibold">
+                         {work.status === 'vendido' ? (
+                           <span className="text-red-500 text-[10px] uppercase font-bold tracking-widest">Vendido</span>
+                         ) : (
+                           `R$ ${work.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                         )}
+                      </p>
+                    </div>
                   </div>
 
                   <button 
