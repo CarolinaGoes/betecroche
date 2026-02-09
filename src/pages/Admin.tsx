@@ -9,9 +9,7 @@ import {
   updateDoc, 
   query, 
   orderBy, 
-  limit,
-  setDoc,
-  getDoc
+  setDoc
 } from "firebase/firestore";
 import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +38,7 @@ export default function Admin() {
       setItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // CORREÇÃO: Escuta o documento único de categorias (igual à sua imagem)
+    // Escuta o documento único de categorias
     const unsubCats = onSnapshot(doc(db, "settings", "categories"), (snapshot) => {
       if (snapshot.exists()) {
         setCategories(snapshot.data().list || []);
@@ -81,7 +79,7 @@ export default function Admin() {
     }
   };
 
-  // 2. CORREÇÃO: Adicionar categoria na ARRAY 'list' do Firebase
+  // 2. Adicionar categoria na ARRAY 'list' do Firebase
   const handleAddCategory = async (e: React.MouseEvent) => {
     e.preventDefault();
     const cleanName = newCategoryName.trim();
@@ -98,7 +96,7 @@ export default function Admin() {
     setTimeout(() => setMessage(""), 2000);
   };
 
-  // 3. CORREÇÃO: Remover categoria da ARRAY 'list' do Firebase
+  // 3. Remover categoria da ARRAY 'list' do Firebase
   const handleRemoveCategory = async (catToRemove: string) => {
     if (window.confirm(`Remover a categoria "${catToRemove}"?`)) {
       try {
