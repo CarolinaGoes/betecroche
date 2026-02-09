@@ -1,0 +1,41 @@
+html, body, #root {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: white !important; /* Se houver falha, a borda será branca/invisível */
+  overflow-x: hidden;
+}
+
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", serif;
+  
+  /* Paleta Lavanda */
+  --color-brand-lavender-light: #F8F4FF;  /* Fundo muito suave */
+  --color-brand-lavender: #E6E6FA;        /* Lavanda clássico */
+  --color-brand-lavender-dark: #967BB6;   /* Lavanda para textos e botões */
+  --color-brand-brown: #4A3E37;           /* Marrom café para leitura legível */
+  --color-brand-lavender-light: #F8F4FF; /* Lavanda bem clarinho para o fundo */
+  --color-brand-lavender-subtle: #E6E6FA; /* Lavanda para o carregamento */
+}
+
+@layer base {
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+  }
+  
+  body {
+    overflow-x: hidden; 
+    background-color: white;
+  }
+}
+@layer utilities {.min-h-safe {
+    min-height: 100vh; 
+    min-height: 100dvh; 
+  }
+}
