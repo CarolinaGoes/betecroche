@@ -11,7 +11,7 @@ import {
   setDoc,
   deleteDoc as firestoreDeleteDoc
 } from "firebase/firestore";
-import { Plus, Trash2, Edit2, Save, Image as ImageIcon, CheckCircle, FolderPlus, Ruler, ExternalLink, Eye } from "lucide-react";
+import { Plus, Trash2, Edit2, Save, Image as ImageIcon, FolderPlus, Ruler, ExternalLink, Eye } from "lucide-react";
 
 export default function Admin() {
   const formRef = useRef<HTMLDivElement>(null);
@@ -208,7 +208,7 @@ export default function Admin() {
         </header>
 
         {message && (
-          <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-white border-4 border-purple-600 text-purple-700 px-8 py-4 rounded-3xl shadow-2xl z-50 text-2xl font-bold animate-pulse">
+          <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-white border-4 border-purple-600 text-purple-700 px-8 py-4 rounded-3xl shadow-2xl z-50 text-2xl font-bold">
             {message}
           </div>
         )}
@@ -246,7 +246,7 @@ export default function Admin() {
               </div>
               <div className="space-y-2">
                 <label className="text-2xl font-bold text-gray-700 ml-2">Categoria</label>
-                <select required value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500 appearance-none">
+                <select required value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500">
                   <option value="">Escolha uma...</option>
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -257,7 +257,7 @@ export default function Admin() {
               <label className="cursor-pointer">
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                 <ImageIcon size={50} className="mx-auto mb-3 text-purple-500" />
-                <span className="text-2xl font-black text-purple-700 block leading-tight">{fileName || "Clique aqui para escolher a foto"}</span>
+                <span className="text-2xl font-black text-purple-700 block leading-tight">{fileName || "Escolha a foto da peça"}</span>
               </label>
             </div>
 
@@ -266,12 +266,12 @@ export default function Admin() {
             </button>
             
             {isEditing && (
-              <button type="button" onClick={clearForm} className="w-full text-gray-500 text-2xl font-bold py-2 underline">Cancelar Edição</button>
+              <button type="button" onClick={clearForm} className="w-full text-gray-500 text-2xl font-bold py-2 underline">Cancelar e fazer uma nova</button>
             )}
           </form>
         </section>
 
-        {/* SEÇÃO DE CATEGORIAS */}
+        {/* CATEGORIAS */}
         <section className="bg-white rounded-[40px] shadow-lg p-8 mb-12 border-4 border-purple-100">
           <h2 className="text-3xl font-bold mb-6 flex items-center gap-3 text-purple-800 font-serif">
             <FolderPlus size={32} /> Criar Categorias
@@ -301,9 +301,9 @@ export default function Admin() {
           </div>
         </section>
 
-        {/* LISTA DE PEÇAS */}
+        {/* LISTA */}
         <section className="space-y-8 pb-32">
-          <h2 className="text-4xl font-black text-purple-900 font-serif mb-8 text-center md:text-left">Lista de Peças Cadastradas</h2>
+          <h2 className="text-4xl font-black text-purple-900 font-serif mb-8 text-center md:text-left">Peças Cadastradas</h2>
           {items.map(item => (
             <div key={item.id} className={`bg-white p-6 rounded-[40px] shadow-md border-4 flex flex-col gap-6 items-center transition-all ${isEditing === item.id ? 'border-orange-400 bg-orange-50/30' : 'border-purple-50'}`}>
               <img src={item.image} className="w-full md:w-60 h-60 object-cover rounded-[30px] shadow-inner" alt="" />
