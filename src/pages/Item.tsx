@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, MessageCircle, Ruler, Tag, Loader2 } from "lucide-react";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";

@@ -1,4 +1,3 @@
-import React from "react";
 import { MessageCircle, Instagram, MapPin } from "lucide-react";
 
 export default function Contato() {
