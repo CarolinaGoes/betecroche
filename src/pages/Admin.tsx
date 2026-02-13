@@ -25,7 +25,6 @@ export default function Admin() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dimensions, setDimensions] = useState(""); 
-  const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [imageEncoded, setImageEncoded] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
@@ -51,7 +50,6 @@ export default function Admin() {
     setTitle(item.title);
     setDescription(item.description || "");
     setDimensions(item.dimensions || "");
-    setPrice(item.price.toString());
     setCategory(item.category);
     setFileName("Imagem atual preservada");
 
@@ -67,7 +65,6 @@ export default function Admin() {
     setTitle("");
     setDescription("");
     setDimensions("");
-    setPrice("");
     setCategory("");
     setImageEncoded(null);
     setFileName("");
@@ -110,7 +107,6 @@ export default function Admin() {
         title,
         description,
         dimensions,
-        price: parseFloat(price.replace(",", ".")),
         category,
         date: new Date().toISOString(),
       };
@@ -239,18 +235,12 @@ export default function Admin() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-2">
-                <label className="text-2xl font-bold text-gray-700 ml-2">Preço (R$)</label>
-                <input type="text" required value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-2xl font-bold text-gray-700 ml-2">Categoria</label>
-                <select required value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500">
-                  <option value="">Escolha uma...</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+            <div className="space-y-2">
+              <label className="text-2xl font-bold text-gray-700 ml-2">Categoria</label>
+              <select required value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-6 text-2xl rounded-2xl border-2 border-purple-100 bg-purple-50/30 outline-none focus:border-purple-500">
+                <option value="">Escolha uma...</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
 
             <div className="bg-purple-100/50 p-10 rounded-2xl border-4 border-dashed border-purple-300 text-center">
@@ -309,8 +299,7 @@ export default function Admin() {
               <img src={item.image} className="w-full md:w-60 h-60 object-cover rounded-[30px] shadow-inner" alt="" />
               <div className="flex-1 w-full text-center md:text-left">
                 <h3 className="text-3xl font-black text-gray-800 mb-2">{item.title}</h3>
-                {item.dimensions && <p className="text-2xl text-gray-500 mb-2 font-bold">📏 {item.dimensions}</p>}
-                <p className="text-purple-700 font-black text-4xl mb-6">R$ {Number(item.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                {item.dimensions && <p className="text-2xl text-gray-500 mb-6 font-bold">📏 {item.dimensions}</p>}
                 
                 <div className="grid grid-cols-1 gap-3 mb-8">
                   <button onClick={() => updateStatus(item.id, "disponivel")} className={`p-5 rounded-2xl text-xl font-black border-4 ${item.status === 'disponivel' ? 'bg-green-600 text-white border-green-600 shadow-md' : 'text-green-600 border-green-200 bg-green-50'}`}>DISPONÍVEL AGORA</button>
