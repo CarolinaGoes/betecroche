@@ -64,7 +64,6 @@ export default function Item() {
     const WHATSAPP_NUMBER = "5513991912020";
     const currentUrl = window.location.href;
 
-    // Lógica de cores para o status
     const getStatusStyles = (status: string) => {
         switch (status) {
             case 'disponivel': return 'text-green-600 bg-green-50';
@@ -99,7 +98,6 @@ export default function Item() {
             <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
                     
-                    {/* FOTO: Sempre limpa, sem filtros de "vendido" */}
                     <div className="rounded-sm overflow-hidden shadow-xl bg-white p-2">
                         <img
                             src={work.image}
@@ -117,13 +115,13 @@ export default function Item() {
                             {work.title}
                         </h1>
 
-                        <div className="flex items-baseline gap-4 mb-8">
-                            <p className="text-3xl font-light text-brand-lavender-dark">
-                                {work.status === "vendido" 
-                                    ? "Acervo Privado" 
-                                    : `R$ ${Number(work.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                                }
-                            </p>
+                        {/* BLOCO CORRIGIDO: Removido R$ e conversão Number */}
+                        <div className="flex items-baseline gap-4 mb-8 min-h-[40px]">
+                            {work.status === "vendido" && (
+                                <p className="text-3xl font-light text-brand-lavender-dark italic font-serif">
+                                    Acervo Privado
+                                </p>
+                            )}
                         </div>
 
                         <div className="space-y-6 mb-10 border-y border-brand-lavender/20 py-8">
@@ -157,7 +155,6 @@ export default function Item() {
                             </p>
                         </div>
 
-                        {/* BOTÃO WHATSAPP: Removido se estiver vendido */}
                         {work.status !== "vendido" ? (
                             <button
                                 onClick={() => {

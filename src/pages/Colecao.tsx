@@ -148,13 +148,8 @@ export default function Colecao() {
                       {work.title}
                     </h3>
                     <div className="text-right ml-2">
-                      <p className="text-brand-lavender-dark font-semibold text-sm">
-                         {work.status === 'vendido' ? (
-                           <span className="text-red-500 text-[9px] uppercase font-bold tracking-widest">Vendido</span>
-                         ) : (
-                           `R$ ${work.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                         )}
-                      </p>
+                     
+                      
                     </div>
                   </div>
 
